@@ -1,24 +1,37 @@
 name: deploy to lambda
-on: [push]
-jobs:
+on: [push]	on: [push]
+jobs:	jobs:
 
   deploy_source:
-    name: deploy lambda from source
+  deploy_zip:	    name: build and deploy lambda
+    name: deploy lambda function	
+    runs-on: ubuntu-latest	
+    strategy:	    strategy:
+      matrix:	      matrix:
+        go-version: [1.13.x]	        node-version: [12.x]
     runs-on: ubuntu-latest
-    steps:
-      - name: checkout source code
-        uses: actions/checkout@v1
+    steps:	    steps:
+      - name: checkout source code	      - uses: actions/checkout@v1
+        uses: actions/checkout@v1	      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Install Go	        uses: actions/setup-node@v1
+        uses: actions/setup-go@v1	
+        with:	        with:
+          go-version: ${{ matrix.go-version }}	          node-version: ${{ matrix.node-version }}
+      - name: Build binary	      - name: npm install and build
+        run: |	        run: |
+          cd example && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -a -o main main.go && zip deployment.zip main	          npm i
+          npm run build --if-present
+        env:
+          CI: true
       - name: zip
         uses: montudor/action-zip@v0.1.0
         with:
           args: zip -qq -r ./bundle.zip ./
-      - name: default deploy
-        uses: appleboy/lambda-action@master
-        with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ secrets.AWS_REGION }}
-          function_name: myGitHubTest
-          source: bundle.zip
-        
-        
+      - name: default deploy	      - name: default deploy
+        uses: appleboy/lambda-action@master	        uses: appleboy/lambda-action@master
+        with:	        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}	          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}	          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}	          aws_region: ${{ secrets.AWS_REGION }}
+          function_name: myGitHubTest	          function_name: myGitHubTest
+          zip_file: example/deployment.zip	          zip_file: bundle.zip
