@@ -3,7 +3,7 @@ exports.handler = async (event) => {
         statusCode: 200,
         body: JSON.stringify('All working good !!! '),
         // TEST WITH OTHER YML FILE WORKIN'
-        //oldtest
+        //Here we go again, test#2
     };
     return response;
 };
